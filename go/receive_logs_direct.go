@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -71,9 +72,11 @@ func main() {
 
 	forever := make(chan bool)
 
+	fmt.Printf("Queue name: %", q.Name)
+
 	go func() {
 		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
+			log.Printf(" [x] %s | %s", d.RoutingKey, d.Body)
 		}
 	}()
 
