@@ -23,6 +23,7 @@ func main() {
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
+	exchange := "logs"
 	// Co 2 tinh huong:
 	// 1. Ca Producer va Consumer phai giong nhau
 	// 2. Pushisher co the push len truoc
@@ -32,8 +33,8 @@ func main() {
 	noWait := true
 	// @todo should search about when "exclusive is true" should be used?
 	exclusive := false // Co y nghia ve viec chi cho duy nhat mot connection connect vao cai queue do
-	q, err := ch.QueueDeclare(
-		"hello",    // name
+	_, err = ch.QueueDeclare(
+		"hello1",   // name
 		false,      // durable => the queue will survive a broker restart
 		autoDelete, // autoDelete => delete when unused
 		exclusive,  // exclusive
@@ -41,7 +42,17 @@ func main() {
 		nil,        // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
-	ch.QueueBind("hello", "hello", "logs_direct", false, nil)
+	_, err = ch.QueueDeclare(
+		"hello2",   // name
+		false,      // durable => the queue will survive a broker restart
+		autoDelete, // autoDelete => delete when unused
+		exclusive,  // exclusive
+		noWait,     // no-wait
+		nil,        // arguments
+	)
+	failOnError(err, "Failed to declare a queue")
+	ch.QueueBind("hello1", "hello", exchange, false, nil)
+	ch.QueueBind("hello2", "hello", exchange, false, nil)
 	// fmt.Println("1111111")
 	// noWait2 := true //
 	// // Chuong trinh bi stuck o day
@@ -49,17 +60,18 @@ func main() {
 	// 	failOnError(err, "Confirm channel is error")
 	// }
 	// fmt.Println("2222222")
-
+	// Voi exchange kieu fanout thi routing key khong y nghia
+	routingKey := "na"
 	for i := 0; i < 10000; i++ {
 		body := "AAAAA " + strconv.Itoa(i)
 		err = ch.Publish(
-			"logs_direct", // exchange (default amqp)
+			exchange, // exchange if empty "" => (default amqp)
 			// Chu y cai routing key va cai q.Name that su hem co lien quan
 			// Ban chat la luc minh khai bao cai bind cho exchange voi cai queue minh se quyet dinh
 			// La giua 2 cai do se lien lac qua cai key gi.
-			q.Name, // routing key
-			false,  // mandatory
-			false,  // immediate
+			routingKey, // q.Name: routing key
+			false,      // mandatory
+			false,      // immediate
 			amqp.Publishing{
 				ContentType: "text/plain",
 				Body:        []byte(body),

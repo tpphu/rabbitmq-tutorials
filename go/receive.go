@@ -30,7 +30,7 @@ func main() {
 	noWait := true
 	exclusive := false
 	q, err := ch.QueueDeclare(
-		"hello",    // name
+		"hello2",   // name
 		false,      // durable
 		autoDelete, // delete when unused
 		exclusive,  // exclusive
